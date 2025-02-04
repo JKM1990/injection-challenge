@@ -11,21 +11,28 @@ try {
     echo "Connection failed: " . $e->getMessage();
 }
 
-// Vulnerable login form processing
+// SECURITY ISSUE 1: Direct user input in SQL query without sanitization
+// SECURITY ISSUE 2: Using string concatenation instead of prepared statements
+// SECURITY ISSUE 3: Displaying database errors to users
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $user_password = $_POST['password'];
-    // Intentionally vulnerable query with password check
+    $username = $_POST['username'];  // Raw input - not sanitized
+    $user_password = $_POST['password'];  // Raw input - not sanitized
+    
+    // VULNERABLE QUERY - Direct string concatenation
+    // FIX: Use prepared statements with placeholders:
+    // $query = "SELECT * FROM users WHERE username = ? AND password = ?";
+    // $stmt = $pdo->prepare($query);
+    // $stmt->execute([$username, $user_password]);
     $query = "SELECT * FROM users WHERE username = '$username' AND password = '$user_password'";
     
     try {
         $result = $pdo->query($query);
         
-        // Check if it's a UNION query or LIKE query
+        // SECURITY ISSUE 4: Different behavior based on query content allows attackers to identify injection success
         if (stripos($username, 'UNION') !== false || stripos($username, 'LIKE') !== false) {
-            // For UNION and LIKE queries, show all results
             $users = $result->fetchAll(PDO::FETCH_ASSOC);
             if ($users) {
+                // SECURITY ISSUE 5: Displaying sensitive data (passwords, credit cards, SSNs)
                 echo "<div class='result'>Found " . count($users) . " users matching the query:<br><br>";
                 foreach ($users as $user) {
                     echo "=== User Data ===<br>";
@@ -39,7 +46,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 echo "<div class='error'>Invalid username or password.</div>";
             }
         } else {
-            // For basic queries (like OR 1=1), show only first result
             $user = $result->fetch(PDO::FETCH_ASSOC);
             if ($user) {
                 echo "<div class='result'>Login successful! User data:<br><br>";
