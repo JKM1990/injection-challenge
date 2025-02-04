@@ -9,7 +9,7 @@ A simple SQL injection challenge designed for educational purposes. Try to bypas
 ## Setup Instructions
 1. Clone this repository:
 
-   git clone [your-repo-url]
+   git clone https://github.com/JKM1990/injection-challenge
 
 
 2. Navigate to the project directory:
